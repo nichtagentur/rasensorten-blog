@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI Content Automation -- Wie ein Blog sich selbst baut</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;font-family:system-ui,-apple-system,sans-serif;background:#0a0a0a;color:#f0f0f0}
+.deck{height:100%;width:100%;position:relative}
+.slide{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:4rem 6rem;opacity:0;pointer-events:none;transition:opacity .4s ease}
+.slide.active{opacity:1;pointer-events:auto}
+h1{font-size:3rem;line-height:1.2;margin-bottom:1.5rem;text-align:center}
+h2{font-size:2.4rem;line-height:1.2;margin-bottom:1.2rem;color:#4a7c23}
+h3{font-size:1.6rem;color:#8bc34a;margin-bottom:.8rem}
+p{font-size:1.4rem;line-height:1.7;max-width:900px;text-align:center;margin-bottom:1rem}
+ul{font-size:1.3rem;line-height:1.8;list-style:none;max-width:900px}
+ul li{padding-left:1.5rem;position:relative;margin-bottom:.5rem}
+ul li::before{content:"--";position:absolute;left:0;color:#4a7c23}
+ol{font-size:1.3rem;line-height:1.8;max-width:900px;padding-left:1.5rem}
+ol li{margin-bottom:.5rem}
+.accent{color:#4a7c23}
+.bright{color:#8bc34a}
+.dim{color:#888;font-size:1.1rem}
+.quote{font-style:italic;font-size:1.5rem;color:#8bc34a;border-left:4px solid #4a7c23;padding:.5rem 1.5rem;margin:1.5rem 0;max-width:800px;text-align:left}
+table{border-collapse:collapse;margin:1rem 0;font-size:1.1rem}
+th,td{border:1px solid #333;padding:.5rem .8rem;text-align:left}
+th{background:#1a2e0a;color:#8bc34a;font-weight:600}
+td{background:#111}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:3rem;max-width:1000px;width:100%}
+.two-col>div{text-align:left}
+.checklist{list-style:none;font-size:1.15rem;line-height:2}
+.checklist li::before{content:"[checkmark] ";color:#4a7c23}
+.nav{position:fixed;bottom:1.5rem;right:2rem;display:flex;gap:.5rem;z-index:10}
+.nav button{background:#1a1a1a;border:1px solid #333;color:#888;padding:.4rem .8rem;border-radius:4px;cursor:pointer;font-size:.9rem}
+.nav button:hover{color:#f0f0f0;border-color:#4a7c23}
+.progress{position:fixed;bottom:0;left:0;height:3px;background:#4a7c23;transition:width .3s ease;z-index:10}
+.slide-num{position:fixed;bottom:1.5rem;left:2rem;color:#555;font-size:.85rem;z-index:10}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;max-width:1000px;width:100%}
+.card{background:#141414;border:1px solid #252525;border-radius:8px;padding:1.2rem;text-align:center}
+.card h3{font-size:1.2rem;margin-bottom:.4rem}
+.card p{font-size:1rem;text-align:center;margin:0}
+.big-number{font-size:4rem;font-weight:700;color:#4a7c23;line-height:1}
+.step-flow{display:flex;gap:.5rem;align-items:center;margin:1.5rem 0;flex-wrap:wrap;justify-content:center}
+.step-box{background:#1a2e0a;border:1px solid #4a7c23;border-radius:8px;padding:.8rem 1.2rem;font-size:1.1rem;font-weight:600;color:#8bc34a}
+.step-arrow{font-size:1.5rem;color:#4a7c23}
+</style>
+</head>
+<body>
+<div class="deck">
+
+<!-- Slide 1: Title -->
+<div class="slide active" id="s1">
+<h1>AI Content Automation</h1>
+<p style="font-size:1.8rem;color:#8bc34a">Wie ein Blog sich selbst baut</p>
+<p class="dim" style="margin-top:2rem">Stefan Machinek | Februar 2026</p>
+</div>
+
+<!-- Slide 2: Das Problem -->
+<div class="slide" id="s2">
+<h2>Das Problem</h2>
+<ul>
+<li>Content-Erstellung ist zeitintensiv</li>
+<li>SEO erfordert Expertise + absolute Konsistenz</li>
+<li>Skalierung braucht normalerweise Personal</li>
+<li>Qualitaet sinkt, wenn Quantitaet steigt</li>
+</ul>
+<div class="quote">"Jeder Gaertner kann einen Rasen anlegen. Aber wer pflegt 17 Rasenflaechen gleichzeitig?"</div>
+</div>
+
+<!-- Slide 3: Die Vision -->
+<div class="slide" id="s3">
+<h2>Die Vision</h2>
+<ul>
+<li>Vollautomatisierter Blog <span class="bright">ohne manuellen Eingriff</span></li>
+<li>Rules-based statt manuell</li>
+<li>Jede Seite folgt demselben Algorithmus</li>
+<li>Ergebnis: Lighthouse <span class="accent">100 / 100 / 100</span></li>
+</ul>
+<p class="dim" style="margin-top:1.5rem">17 Seiten in unter 1 Stunde -- reproduzierbar fuer jedes Thema</p>
+</div>
+
+<!-- Slide 4: Architektur -->
+<div class="slide" id="s4">
+<h2>Architektur: 3 Silos, 17 Seiten, 1 Regelsystem</h2>
+<svg viewBox="0 0 800 400" width="800" height="400" style="max-width:100%">
+<!-- Hub -->
+<rect x="320" y="10" width="160" height="50" rx="8" fill="#1a2e0a" stroke="#4a7c23" stroke-width="2"/>
+<text x="400" y="42" text-anchor="middle" fill="#8bc34a" font-size="14" font-family="system-ui" font-weight="600">index.html (Hub)</text>
+<!-- Silo 1: Rasentypen -->
+<rect x="30" y="100" width="200" height="35" rx="6" fill="#1a2e0a" stroke="#4a7c23"/>
+<text x="130" y="123" text-anchor="middle" fill="#8bc34a" font-size="13" font-family="system-ui" font-weight="600">Silo 1: Rasentypen</text>
+<rect x="10" y="150" width="110" height="28" rx="4" fill="#141414" stroke="#333"/>
+<text x="65" y="169" text-anchor="middle" fill="#ccc" font-size="10" font-family="system-ui">Zierrasen</text>
+<rect x="130" y="150" width="110" height="28" rx="4" fill="#141414" stroke="#333"/>
+<text x="185" y="169" text-anchor="middle" fill="#ccc" font-size="10" font-family="system-ui">Gebrauchsrasen</text>
+<rect x="10" y="188" width="110" height="28" rx="4" fill="#141414" stroke="#333"/>
+<text x="65" y="207" text-anchor="middle" fill="#ccc" font-size="10" font-family="system-ui">Sportrasen</text>
+<rect x="130" y="188" width="110" height="28" rx="4" fill="#141414" stroke="#333"/>
+<text x="185" y="207" text-anchor="middle" fill="#ccc" font-size="10" font-family="system-ui">Schattenrasen</text>
+<rect x="10" y="226" width="110" height="28" rx="4" fill="#141414" stroke="#333"/>
+<text x="65" y="245" text-anchor="middle" fill="#ccc" font-size="10" font-family="system-ui">Trockenrasen</text>
+<rect x="130" y="226" width="110" height="28" rx="4" fill="#141414" stroke="#333"/>
+<text x="185" y="245" text-anchor="middle" fill="#ccc" font-size="10" font-family="system-ui">Blumenwiese</text>
+<rect x="70" y="264" width="110" height="28" rx="4" fill="#141414" stroke="#333"/>
+<text x="125" y="283" text-anchor="middle" fill="#ccc" font-size="10" font-family="system-ui">Rollrasen</text>
+<!-- Silo 2: Grasarten -->
+<rect x="300" y="100" width="200" height="35" rx="6" fill="#1a2e0a" stroke="#4a7c23"/>
+<text x="400" y="123" text-anchor="middle" fill="#8bc34a" font-size="13" font-family="system-ui" font-weight="600">Silo 2: Grasarten</text>
+<rect x="290" y="150" width="100" height="28" rx="4" fill="#141414" stroke="#333"/>
+<text x="340" y="169" text-anchor="middle" fill="#ccc" font-size="9" font-family="system-ui">Dt. Weidelgras</text>
+<rect x="400" y="150" width="100" height="28" rx="4" fill="#141414" stroke="#333"/>
+<text x="450" y="169" text-anchor="middle" fill="#ccc" font-size="9" font-family="system-ui">Wiesenrispe</text>
+<rect x="290" y="188" width="100" height="28" rx="4" fill="#141414" stroke="#333"/>
+<text x="340" y="207" text-anchor="middle" fill="#ccc" font-size="9" font-family="system-ui">Rotschwingel</text>
+<rect x="400" y="188" width="100" height="28" rx="4" fill="#141414" stroke="#333"/>
+<text x="450" y="207" text-anchor="middle" fill="#ccc" font-size="9" font-family="system-ui">Straussgras</text>
+<rect x="345" y="226" width="100" height="28" rx="4" fill="#141414" stroke="#333"/>
+<text x="395" y="245" text-anchor="middle" fill="#ccc" font-size="9" font-family="system-ui">Schafschwingel</text>
+<!-- Silo 3: Pflege -->
+<rect x="570" y="100" width="200" height="35" rx="6" fill="#1a2e0a" stroke="#4a7c23"/>
+<text x="670" y="123" text-anchor="middle" fill="#8bc34a" font-size="13" font-family="system-ui" font-weight="600">Silo 3: Pflege</text>
+<rect x="570" y="150" width="110" height="28" rx="4" fill="#141414" stroke="#333"/>
+<text x="625" y="169" text-anchor="middle" fill="#ccc" font-size="10" font-family="system-ui">Duenger</text>
+<rect x="690" y="150" width="110" height="28" rx="4" fill="#141414" stroke="#333"/>
+<text x="745" y="169" text-anchor="middle" fill="#ccc" font-size="10" font-family="system-ui">Pflegekalender</text>
+<rect x="620" y="195" width="110" height="28" rx="4" fill="#141414" stroke="#333"/>
+<text x="675" y="214" text-anchor="middle" fill="#ccc" font-size="10" font-family="system-ui">Autor (EEAT)</text>
+<!-- Connecting lines -->
+<line x1="350" y1="60" x2="130" y2="100" stroke="#4a7c23" stroke-width="1.5" opacity=".6"/>
+<line x1="400" y1="60" x2="400" y2="100" stroke="#4a7c23" stroke-width="1.5" opacity=".6"/>
+<line x1="450" y1="60" x2="670" y2="100" stroke="#4a7c23" stroke-width="1.5" opacity=".6"/>
+<!-- Cross-silo links -->
+<line x1="240" y1="200" x2="290" y2="180" stroke="#8bc34a" stroke-width="1" stroke-dasharray="4,3" opacity=".4"/>
+<line x1="240" y1="220" x2="290" y2="200" stroke="#8bc34a" stroke-width="1" stroke-dasharray="4,3" opacity=".4"/>
+<line x1="500" y1="180" x2="570" y2="165" stroke="#8bc34a" stroke-width="1" stroke-dasharray="4,3" opacity=".4"/>
+<line x1="240" y1="170" x2="570" y2="165" stroke="#8bc34a" stroke-width="1" stroke-dasharray="4,3" opacity=".3"/>
+<!-- Legend -->
+<text x="250" y="340" text-anchor="middle" fill="#555" font-size="11" font-family="system-ui">--- gestrichelt = Cross-Silo Interlinking (bidirektional)</text>
+<text x="250" y="360" text-anchor="middle" fill="#555" font-size="11" font-family="system-ui">___ durchgezogen = Silo-Hierarchie</text>
+</svg>
+</div>
+
+<!-- Slide 5: Content-Prozess -->
+<div class="slide" id="s5">
+<h2>Der Content-Prozess: 5 Schritte</h2>
+<div class="step-flow">
+<div class="step-box">1. RESEARCH</div><div class="step-arrow">&#8594;</div>
+<div class="step-box">2. GENERATE</div><div class="step-arrow">&#8594;</div>
+<div class="step-box">3. CRITIQUE</div><div class="step-arrow">&#8594;</div>
+<div class="step-box">4. IMPROVE</div><div class="step-arrow">&#8594;</div>
+<div class="step-box">5. PUBLISH</div>
+</div>
+<p class="dim" style="margin-top:1.5rem">Kein manueller Eingriff zwischen den Schritten.<br>Der Algorithmus entscheidet, wann Qualitaet erreicht ist.</p>
+</div>
+
+<!-- Slide 6: Research -->
+<div class="slide" id="s6">
+<h2>Schritt 1: Research</h2>
+<ul>
+<li>Parallele AI-Agenten durchsuchen das Web</li>
+<li>Botanische Fakten, RSM-Standards, Naehrstoffwerte</li>
+<li>Wettbewerber-Analyse: Was rankt, was fehlt?</li>
+<li>Search Intent pro Keyword identifizieren</li>
+</ul>
+<p style="margin-top:1.5rem">Ergebnis: <span class="bright">Strukturierte Wissensbasis</span> -- kein Raten, sondern Daten.</p>
+</div>
+
+<!-- Slide 7: Generate -->
+<div class="slide" id="s7">
+<h2>Schritt 2: Generate</h2>
+<div class="two-col">
+<div>
+<h3>Template-DNA</h3>
+<ul>
+<li>Einheitliches HTML-Template</li>
+<li>Inline CSS (~3KB)</li>
+<li>Inline SVG pro Seite</li>
+<li>JSON-LD Schema</li>
+<li>800-1200 Worte Content</li>
+</ul>
+</div>
+<div>
+<h3>Interlinking per Matrix</h3>
+<ul>
+<li>Keine manuellen Links</li>
+<li>Regelsystem bestimmt Verlinkung</li>
+<li>Bidirektional: A verlinkt B, B verlinkt A</li>
+<li>Cross-Silo + Intra-Silo</li>
+</ul>
+</div>
+</div>
+<div class="quote" style="margin-top:1rem">"Das Template ist die DNA. Jede Seite ist ein Organismus, der nach demselben Bauplan waechst."</div>
+</div>
+
+<!-- Slide 8: Critique -->
+<div class="slide" id="s8">
+<h2>Schritt 3: Critique -- Die Checkliste</h2>
+<div class="two-col">
+<div>
+<ul class="checklist">
+<li>H1 unique + keyword-optimiert?</li>
+<li>Meta Description 150-160 Zeichen?</li>
+<li>Heading-Hierarchie ohne Spruenge?</li>
+<li>Alle Matrix-Links vorhanden?</li>
+<li>Inhalt faktisch korrekt?</li>
+</ul>
+</div>
+<div>
+<ul class="checklist">
+<li>SVG hat role="img" + aria-label?</li>
+<li>Seitengroesse &lt; 15KB?</li>
+<li>Search Intent beantwortet?</li>
+<li>Kein Marketing-Fluff?</li>
+<li>Schema.org korrekt?</li>
+</ul>
+</div>
+</div>
+<p class="dim" style="margin-top:1rem">Die AI kritisiert sich selbst -- gegen messbare Kriterien, nicht gegen Gefuehl.</p>
+</div>
+
+<!-- Slide 9: Improve + Publish -->
+<div class="slide" id="s9">
+<h2>Schritt 4+5: Improve &amp; Publish</h2>
+<div class="grid-3" style="margin-top:1rem">
+<div class="card">
+<h3>Improve</h3>
+<p>Schwaechen aus Critique fixen. Fehlende Links ergaenzen. Fakten korrigieren.</p>
+</div>
+<div class="card">
+<h3>Minify</h3>
+<p>HTML komprimieren. Whitespace entfernen. Dateien auf 6-17 KB.</p>
+</div>
+<div class="card">
+<h3>Deploy</h3>
+<p>Git commit + push. GitHub Pages deployt automatisch. Live in Sekunden.</p>
+</div>
+</div>
+<p class="dim" style="margin-top:1.5rem">Vom Entwurf bis zur Live-Seite: kein menschlicher Zwischenschritt</p>
+</div>
+
+<!-- Slide 10: Interlinking-Matrix -->
+<div class="slide" id="s10">
+<h2>Die Interlinking-Matrix</h2>
+<table style="font-size:.85rem">
+<thead>
+<tr><th></th><th>Zier</th><th>Gebr.</th><th>Sport</th><th>Schatt.</th><th>Trock.</th><th>Weidelgr.</th><th>Wiesenr.</th><th>Rotschw.</th><th>Duenger</th></tr>
+</thead>
+<tbody>
+<tr><td style="color:#8bc34a;font-weight:600">Zierrasen</td><td>--</td><td style="color:#4a7c23">x</td><td></td><td style="color:#4a7c23">x</td><td></td><td></td><td style="color:#4a7c23">x</td><td style="color:#4a7c23">x</td><td style="color:#4a7c23">x</td></tr>
+<tr><td style="color:#8bc34a;font-weight:600">Gebrauchsr.</td><td style="color:#4a7c23">x</td><td>--</td><td style="color:#4a7c23">x</td><td style="color:#4a7c23">x</td><td></td><td style="color:#4a7c23">x</td><td style="color:#4a7c23">x</td><td style="color:#4a7c23">x</td><td style="color:#4a7c23">x</td></tr>
+<tr><td style="color:#8bc34a;font-weight:600">Sportrasen</td><td></td><td style="color:#4a7c23">x</td><td>--</td><td></td><td></td><td style="color:#4a7c23">x</td><td style="color:#4a7c23">x</td><td></td><td style="color:#4a7c23">x</td></tr>
+<tr><td style="color:#8bc34a;font-weight:600">Schattenr.</td><td style="color:#4a7c23">x</td><td style="color:#4a7c23">x</td><td></td><td>--</td><td></td><td></td><td></td><td style="color:#4a7c23">x</td><td style="color:#4a7c23">x</td></tr>
+<tr><td style="color:#8bc34a;font-weight:600">Trockenr.</td><td></td><td></td><td></td><td></td><td>--</td><td></td><td></td><td></td><td style="color:#4a7c23">x</td></tr>
+</tbody>
+</table>
+<div class="quote" style="margin-top:1rem">"Wie ein Wurzelsystem -- an der Oberflaeche 17 Seiten, darunter ein algorithmischer Linkgraph."</div>
+</div>
+
+<!-- Slide 11: SEO-Architektur -->
+<div class="slide" id="s11">
+<h2>SEO-Architektur</h2>
+<div class="grid-3">
+<div class="card">
+<h3>EEAT</h3>
+<p>Fiktiver Experte mit Schema.org Person. Autor-Seite mit Biografie. Trust-Signale.</p>
+</div>
+<div class="card">
+<h3>Silo-Struktur</h3>
+<p>3 thematische Saeulen. Interne Verlinkung staerkt Topic Authority.</p>
+</div>
+<div class="card">
+<h3>Technical SEO</h3>
+<p>BlogPosting Schema. Canonical URLs. OG Tags. Zero JavaScript = perfekte CWV.</p>
+</div>
+</div>
+<p style="margin-top:1.5rem">Jede Seite ist <span class="bright">semantisch vollstaendig</span>: Meta, Schema, Links, Hierarchie.</p>
+</div>
+
+<!-- Slide 12: Ergebnisse -->
+<div class="slide" id="s12">
+<h2>Technische Ergebnisse</h2>
+<div class="grid-3" style="grid-template-columns:repeat(4,1fr)">
+<div class="card">
+<div class="big-number">100</div>
+<p>Performance</p>
+</div>
+<div class="card">
+<div class="big-number">100</div>
+<p>Accessibility</p>
+</div>
+<div class="card">
+<div class="big-number">100</div>
+<p>SEO</p>
+</div>
+<div class="card">
+<div class="big-number" style="color:#a0a0a0">96</div>
+<p>Best Practices</p>
+</div>
+</div>
+<div class="two-col" style="margin-top:2rem;max-width:600px">
+<div style="text-align:center">
+<p style="font-size:1.1rem">Seitengroesse</p>
+<p class="bright" style="font-size:1.8rem;font-weight:700">6 - 17 KB</p>
+</div>
+<div style="text-align:center">
+<p style="font-size:1.1rem">Ladezeit</p>
+<p class="bright" style="font-size:1.8rem;font-weight:700">&lt; 1 Sekunde</p>
+</div>
+</div>
+</div>
+
+<!-- Slide 13: Parallelisierung -->
+<div class="slide" id="s13">
+<h2>Parallelisierung: 6 Agenten gleichzeitig</h2>
+<svg viewBox="0 0 700 250" width="700" height="250" style="max-width:100%">
+<!-- Timeline -->
+<line x1="80" y1="220" x2="650" y2="220" stroke="#333" stroke-width="2"/>
+<text x="80" y="245" fill="#888" font-size="11" font-family="system-ui">0 min</text>
+<text x="270" y="245" fill="#888" font-size="11" font-family="system-ui">15 min</text>
+<text x="460" y="245" fill="#888" font-size="11" font-family="system-ui">30 min</text>
+<text x="620" y="245" fill="#888" font-size="11" font-family="system-ui">45 min</text>
+<!-- Batch 1 -->
+<rect x="80" y="20" width="200" height="25" rx="4" fill="#1a2e0a" stroke="#4a7c23"/>
+<text x="110" y="37" fill="#8bc34a" font-size="11" font-family="system-ui">Agent 1: Rasentypen (3)</text>
+<rect x="80" y="50" width="200" height="25" rx="4" fill="#1a2e0a" stroke="#4a7c23"/>
+<text x="110" y="67" fill="#8bc34a" font-size="11" font-family="system-ui">Agent 2: Rasentypen (3)</text>
+<rect x="80" y="80" width="180" height="25" rx="4" fill="#1a2e0a" stroke="#4a7c23"/>
+<text x="110" y="97" fill="#8bc34a" font-size="11" font-family="system-ui">Agent 3: Grasarten (2)</text>
+<!-- Batch 2 -->
+<rect x="290" y="20" width="180" height="25" rx="4" fill="#0a2e1a" stroke="#237c4a"/>
+<text x="310" y="37" fill="#4ac382" font-size="11" font-family="system-ui">Agent 4: Grasarten (2)</text>
+<rect x="290" y="50" width="180" height="25" rx="4" fill="#0a2e1a" stroke="#237c4a"/>
+<text x="310" y="67" fill="#4ac382" font-size="11" font-family="system-ui">Agent 5: Grasarten (2)</text>
+<!-- Batch 3 / Direct -->
+<rect x="290" y="80" width="150" height="25" rx="4" fill="#2e2e0a" stroke="#7c7c23"/>
+<text x="310" y="97" fill="#c3c34a" font-size="11" font-family="system-ui">Direkt: Pflege (3)</text>
+<!-- Supporting -->
+<rect x="80" y="120" width="560" height="25" rx="4" fill="#141414" stroke="#333"/>
+<text x="250" y="137" fill="#888" font-size="11" font-family="system-ui">Supporting-Seiten (Hub, Autor, Grasarten-Hub) -- direkt geschrieben</text>
+<!-- Review -->
+<rect x="480" y="20" width="170" height="85" rx="4" fill="#1a1a1a" stroke="#555"/>
+<text x="510" y="50" fill="#ccc" font-size="11" font-family="system-ui">Review + Fix</text>
+<text x="510" y="70" fill="#888" font-size="10" font-family="system-ui">Lighthouse Test</text>
+<text x="510" y="88" fill="#888" font-size="10" font-family="system-ui">a11y Contrast Fix</text>
+<!-- Deploy -->
+<rect x="530" y="155" width="120" height="35" rx="6" fill="#4a7c23"/>
+<text x="560" y="178" fill="#fff" font-size="12" font-family="system-ui" font-weight="600">git push</text>
+</svg>
+<p class="dim">6 AI-Agenten parallel -- 17 Seiten in ~45 Minuten</p>
+</div>
+
+<!-- Slide 14: Was das bedeutet -->
+<div class="slide" id="s14">
+<h2>Was das bedeutet</h2>
+<ul>
+<li><span class="bright">17 Seiten</span> in unter 1 Stunde</li>
+<li>Ohne zusaetzlichen Personalaufwand</li>
+<li>Reproduzierbar fuer <span class="bright">jedes Thema</span></li>
+<li>Skalierbar: 170 Seiten = gleicher Prozess, 10x</li>
+<li>Qualitaet bleibt konstant -- der Algorithmus vergisst keine Checkliste</li>
+</ul>
+<p class="dim" style="margin-top:1.5rem">Nicht schneller arbeiten. Intelligenter automatisieren.</p>
+</div>
+
+<!-- Slide 15: Takeaway -->
+<div class="slide" id="s15">
+<h1 style="color:#4a7c23;font-size:2.5rem">"Make the invisible visible."</h1>
+<ul style="margin-top:2rem;font-size:1.4rem">
+<li>Der Algorithmus <span class="bright">IST</span> der Redakteur</li>
+<li>Die Matrix <span class="bright">IST</span> die Redaktionsplanung</li>
+<li>Die Checkliste <span class="bright">IST</span> das Lektorat</li>
+<li>Das Template <span class="bright">IST</span> der Styleguide</li>
+</ul>
+<p class="dim" style="margin-top:2.5rem">Stefan Machinek | nichtagentur.github.io/rasensorten-blog</p>
+</div>
+
+</div>
+
+<div class="progress" id="progress"></div>
+<div class="slide-num" id="slideNum">1 / 15</div>
+<div class="nav">
+<button onclick="go(-1)" aria-label="Vorherige Slide">&larr;</button>
+<button onclick="go(1)" aria-label="Naechste Slide">&rarr;</button>
+</div>
+
+<script>
+(function(){
+var slides=document.querySelectorAll('.slide'),cur=0,total=slides.length;
+function show(n){
+if(n<0||n>=total)return;
+slides[cur].classList.remove('active');
+cur=n;
+slides[cur].classList.add('active');
+document.getElementById('progress').style.width=((cur+1)/total*100)+'%';
+document.getElementById('slideNum').textContent=(cur+1)+' / '+total;
+}
+window.go=function(d){show(cur+d)};
+document.addEventListener('keydown',function(e){
+if(e.key==='ArrowRight'||e.key===' ')show(cur+1);
+if(e.key==='ArrowLeft')show(cur-1);
+if(e.key==='Home')show(0);
+if(e.key==='End')show(total-1);
+});
+document.querySelector('.deck').addEventListener('click',function(e){
+if(e.target.tagName!=='BUTTON')show(cur+1);
+});
+show(0);
+})();
+</script>
+</body>
+</html>
